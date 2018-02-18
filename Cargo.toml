@@ -16,6 +16,7 @@ categories = ["asynchronous"]
 travis-ci = { repository = "mcginty/mio-utun" }
 
 [dependencies]
+byteorder = "^1.2"
 mio = "^0.6"
 nix = "^0.9"
 
