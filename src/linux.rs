@@ -57,7 +57,7 @@ impl UtunStream {
         }
 
         req[..name.len()].copy_from_slice(name.as_bytes());
-        NativeEndian::write_i16(&mut req[16..], IFF_TUN | IFF_NO_PI);
+        NativeEndian::write_i16(&mut req[16..], IFF_TUN);
 
         unsafe { tunsetiff(fd, &mut req as *mut _ as *mut _) }
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
