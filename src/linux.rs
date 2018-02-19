@@ -18,7 +18,7 @@ use nix;
 use nix::sys::stat::Mode;
 use nix::unistd::{close, read, write};
 use nix::fcntl::{open, O_RDWR, O_NONBLOCK};
-use nix::sys::socket::{Shutdown, MsgFlags, shutdown, send, recv};
+use nix::sys::socket::{Shutdown, shutdown};
 
 /// The primary class for this crate, a stream of tunneled traffic.
 #[derive(Debug)]
@@ -67,29 +67,6 @@ impl UtunStream {
             name: name.into(),
         })
     }
-
-    /// Sends data on the socket to the address previously bound via connect(). On success,
-    /// returns the number of bytes written.
-    pub fn send(&self, buf: &[u8]) -> io::Result<usize> {
-        send(self.fd, buf, MsgFlags::empty())
-            .map_err(|e|
-                match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
-                    _ => io::Error::new(io::ErrorKind::Other, e)
-                })
-    }
-
-    /// Receives data from the socket previously bound with connect(). On success, returns
-    /// the number of bytes read and the address from whence the data came.
-    pub fn recv(&self, buf: &mut [u8]) -> io::Result<usize> {
-        recv(self.fd, buf, MsgFlags::empty())
-            .map_err(|e|
-                match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
-                    _ => io::Error::new(io::ErrorKind::Other, e)
-                })
-    }
-
 
     /// Shuts down the read, write, or both halves of this connection.
     ///
