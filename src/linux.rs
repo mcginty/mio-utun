@@ -89,33 +89,37 @@ impl Drop for UtunStream {
 impl Read for UtunStream {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         read(self.fd, buf)
-            .map_err(|e|
-                match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
-                    _ => io::Error::new(io::ErrorKind::Other, e)
-                })
+        .map_err(|e| match e {
+            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            _ => io::Error::new(io::ErrorKind::Other, e)
+        })
     }
 }
 
 impl<'a> Read for &'a UtunStream {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         read(self.fd, buf)
-            .map_err(|e|
-                match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
-                    _ => io::Error::new(io::ErrorKind::Other, e)
-                })
+        .map_err(|e| match e {
+            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            _ => io::Error::new(io::ErrorKind::Other, e)
+        })
     }
 }
 
 impl Write for UtunStream {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        write(self.fd, buf)
-            .map_err(|e|
-                match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
-                    _ => io::Error::new(io::ErrorKind::Other, e)
-                })
+        if buf.len() == 0 {
+            return Ok(0);
+        }
+
+        match buf[0] >> 4 {
+            4 => write(self.fd, &[&[0u8, 0x00, 0x08, 0x00], buf].concat()),
+            6 => write(self.fd, &[&[0u8, 0x00, 0x86, 0xdd], buf].concat()),
+            _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
+        }.map_err(|e| match e {
+            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            _ => io::Error::new(io::ErrorKind::Other, e)
+        })
     }
 
     fn flush(&mut self) -> io::Result<()> {
@@ -125,12 +129,18 @@ impl Write for UtunStream {
 
 impl<'a> Write for &'a UtunStream {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        write(self.fd, buf)
-            .map_err(|e|
-                match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
-                    _ => io::Error::new(io::ErrorKind::Other, e)
-                })
+        if buf.len() == 0 {
+            return Ok(0);
+        }
+
+        match buf[0] >> 4 {
+            4 => write(self.fd, &[&[0u8, 0x00, 0x08, 0x00], buf].concat()),
+            6 => write(self.fd, &[&[0u8, 0x00, 0x86, 0xdd], buf].concat()),
+            _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
+        }.map_err(|e| match e {
+            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            _ => io::Error::new(io::ErrorKind::Other, e)
+        })
     }
 
     fn flush(&mut self) -> io::Result<()> {
