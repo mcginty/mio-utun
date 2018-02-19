@@ -115,7 +115,8 @@ impl Write for UtunStream {
             4 => write(self.fd, &[&[0u8, 0x00, 0x00, 0x02], buf].concat()),
             6 => write(self.fd, &[&[0u8, 0x00, 0x00, 0x1e], buf].concat()),
             _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
-        }.map_err(|e| match e {
+        }.map(|len| len - 4)
+        .map_err(|e| match e {
             nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
@@ -136,7 +137,8 @@ impl<'a> Write for &'a UtunStream {
             4 => write(self.fd, &[&[0u8, 0x00, 0x00, 0x02], buf].concat()),
             6 => write(self.fd, &[&[0u8, 0x00, 0x00, 0x1e], buf].concat()),
             _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
-        }.map_err(|e| match e {
+        }.map(|len| len - 4)
+        .map_err(|e| match e {
             nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
