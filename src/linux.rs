@@ -3,22 +3,22 @@
 #![cfg(unix)]
 #![doc(html_root_url = "https://docs.rs/mio-utun/0.6")]
 
-
 use byteorder::{ByteOrder, NativeEndian};
 
 use mio::unix::EventedFd;
 use mio::event::Evented;
 use mio::{Poll, Token, Ready, PollOpt};
 
-use std::mem;
-use std::io::{self, Read, Write};
-use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
-
 use nix;
 use nix::sys::stat::Mode;
 use nix::unistd::{close, read, write};
 use nix::fcntl::{open, O_RDWR, O_NONBLOCK};
 use nix::sys::socket::{Shutdown, shutdown};
+
+use std::mem;
+use std::io::{self, Read, Write};
+use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
+
 
 /// The primary class for this crate, a stream of tunneled traffic.
 #[derive(Debug)]

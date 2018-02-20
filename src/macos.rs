@@ -11,12 +11,12 @@ use mio::unix::EventedFd;
 use mio::event::Evented;
 use mio::{Poll, Token, Ready, PollOpt};
 
+use nix::unistd::{close, read, write};
+use nix::sys::socket::{AddressFamily, SockAddr, SockType, Shutdown, socket, connect, shutdown, SYSPROTO_CONTROL, SOCK_NONBLOCK};
+
 use std::mem;
 use std::io::{self, Read, Write};
 use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
-
-use nix::unistd::{close, read, write};
-use nix::sys::socket::{AddressFamily, SockAddr, SockType, Shutdown, socket, connect, shutdown, SYSPROTO_CONTROL, SOCK_NONBLOCK};
 
 /// The primary class for this crate, a stream of tunneled traffic.
 #[derive(Debug)]

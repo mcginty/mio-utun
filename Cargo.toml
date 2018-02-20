@@ -1,6 +1,6 @@
 [package]
 name = "mio-utun"
-version = "0.6.10"
+version = "0.6.11"
 authors = ["Jake McGinty <me@jake.su>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
@@ -16,7 +16,8 @@ categories = ["asynchronous"]
 travis-ci = { repository = "mcginty/mio-utun" }
 
 [dependencies]
-byteorder = "^1.2"
 mio = "^0.6"
 nix = "^0.9"
 
+[target.'cfg(all(target_family = "unix", not(any(target_os = "macos", target_os = "ios"))))'.dependencies]
+byteorder = "^1.2"
