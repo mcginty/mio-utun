@@ -7,12 +7,12 @@ extern crate byteorder;
 extern crate mio;
 #[macro_use] extern crate nix;
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_family = "unix", any(target_os = "macos", target_os = "ios")))]
 pub mod macos;
-#[cfg(target_os = "macos")]
+#[cfg(all(target_family = "unix", any(target_os = "macos", target_os = "ios")))]
 pub use macos::UtunStream;
 
-#[cfg(target_os = "linux")]
+#[cfg(all(target_family = "unix", not(any(target_os = "macos", target_os = "ios"))))]
 pub mod linux;
-#[cfg(target_os = "linux")]
+#[cfg(all(target_family = "unix", not(any(target_os = "macos", target_os = "ios"))))]
 pub use linux::UtunStream;
