@@ -17,14 +17,13 @@ use nix::sys::socket::{Shutdown, shutdown};
 
 use std::mem;
 use std::io::{self, Read, Write};
-use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd};
+use std::os::unix::io::{AsRawFd, IntoRawFd, RawFd, FromRawFd};
 
 
 /// The primary class for this crate, a stream of tunneled traffic.
 #[derive(Debug)]
 pub struct UtunStream {
     fd: RawFd,
-    name: String,
 }
 
 pub const IFNAMSIZ: usize = 16;
@@ -62,10 +61,7 @@ impl UtunStream {
         unsafe { tunsetiff(fd, &mut req as *mut _ as *mut _) }
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
-        return Ok(UtunStream {
-            fd: fd,
-            name: name.into(),
-        })
+        return Ok(UtunStream { fd })
     }
 
     /// Shuts down the read, write, or both halves of this connection.
@@ -177,5 +173,11 @@ impl IntoRawFd for UtunStream {
         let fd = self.fd;
         mem::forget(self);
         fd
+    }
+}
+
+impl FromRawFd for UtunStream {
+    unsafe fn from_raw_fd(fd: RawFd) -> Self {
+        Self { fd }
     }
 }
