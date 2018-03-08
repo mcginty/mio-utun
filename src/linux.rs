@@ -10,9 +10,10 @@ use mio::event::Evented;
 use mio::{Poll, Token, Ready, PollOpt};
 
 use nix;
+use nix::errno::Errno;
 use nix::sys::stat::Mode;
 use nix::unistd::{close, read, write};
-use nix::fcntl::{open, O_RDWR, O_NONBLOCK};
+use nix::fcntl::{open, OFlag};
 use nix::sys::socket::{Shutdown, shutdown};
 
 use std::mem;
@@ -47,7 +48,7 @@ impl UtunStream {
     /// `TcpStream::connect_stream` to transfer ownership into mio and schedule
     /// the connect operation.
     pub fn connect(name: &str) -> io::Result<Self> {
-        let fd = open("/dev/net/tun", O_RDWR | O_NONBLOCK, Mode::empty())
+        let fd = open("/dev/net/tun", OFlag::O_RDWR | OFlag::O_NONBLOCK, Mode::empty())
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
         let mut req = [0u8; 40]; // sizeof(struct ifreq)
@@ -86,7 +87,7 @@ impl Read for UtunStream {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         read(self.fd, buf)
         .map_err(|e| match e {
-            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
     }
@@ -96,7 +97,7 @@ impl<'a> Read for &'a UtunStream {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         read(self.fd, buf)
         .map_err(|e| match e {
-            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
     }
@@ -114,7 +115,7 @@ impl Write for UtunStream {
             _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
         }.map(|len| len - 4)
         .map_err(|e| match e {
-            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
     }
@@ -136,7 +137,7 @@ impl<'a> Write for &'a UtunStream {
             _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
         }.map(|len| len - 4)
         .map_err(|e| match e {
-            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
     }
