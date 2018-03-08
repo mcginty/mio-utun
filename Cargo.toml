@@ -1,6 +1,6 @@
 [package]
 name = "mio-utun"
-version = "0.6.13"
+version = "0.6.14"
 authors = ["Jake McGinty <me@jake.su>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
@@ -17,7 +17,7 @@ travis-ci = { repository = "mcginty/mio-utun" }
 
 [dependencies]
 mio = "^0.6"
-nix = "^0.9"
+nix = "^0.10"
 
 [target.'cfg(all(target_family = "unix", not(any(target_os = "macos", target_os = "ios"))))'.dependencies]
 byteorder = "^1.2"

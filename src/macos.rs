@@ -11,8 +11,10 @@ use mio::unix::EventedFd;
 use mio::event::Evented;
 use mio::{Poll, Token, Ready, PollOpt};
 
+use nix::errno::Errno;
+use nix::fcntl::{fcntl, FcntlArg, OFlag};
 use nix::unistd::{close, read, write};
-use nix::sys::socket::{AddressFamily, SockAddr, SockType, Shutdown, socket, connect, shutdown, SYSPROTO_CONTROL, SOCK_NONBLOCK};
+use nix::sys::socket::{AddressFamily, SockAddr, SockType, SockFlag, SockProtocol, Shutdown, socket, connect, shutdown};
 
 use std::mem;
 use std::io::{self, Read, Write};
@@ -44,8 +46,8 @@ impl UtunStream {
 
         let fd: RawFd = socket(AddressFamily::System,
                                SockType::Datagram,
-                               SOCK_NONBLOCK,
-                               SYSPROTO_CONTROL)
+                               SockFlag::empty(),
+                               SockProtocol::KextControl)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
         let addr = SockAddr::new_sys_control(fd,
@@ -53,6 +55,8 @@ impl UtunStream {
                                              unit + 1)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
+        fcntl(fd, FcntlArg::F_SETFL(OFlag::O_NONBLOCK))
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
         connect(fd, &addr)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
@@ -84,7 +88,7 @@ impl Read for UtunStream {
         read(self.fd, buf)
             .map_err(|e|
                 match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+                    nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
                     _ => io::Error::new(io::ErrorKind::Other, e)
                 })
     }
@@ -95,7 +99,7 @@ impl<'a> Read for &'a UtunStream {
         read(self.fd, buf)
             .map_err(|e|
                 match e {
-                    nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+                    nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
                     _ => io::Error::new(io::ErrorKind::Other, e)
                 })
     }
@@ -113,7 +117,7 @@ impl Write for UtunStream {
             _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
         }.map(|len| len - 4)
         .map_err(|e| match e {
-            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
     }
@@ -135,7 +139,7 @@ impl<'a> Write for &'a UtunStream {
             _ => return Err(io::Error::new(io::ErrorKind::Other, "unrecognized IP version")),
         }.map(|len| len - 4)
         .map_err(|e| match e {
-            nix::Error::Sys(nix::Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
+            nix::Error::Sys(Errno::EAGAIN) => io::ErrorKind::WouldBlock.into(),
             _ => io::Error::new(io::ErrorKind::Other, e)
         })
     }
