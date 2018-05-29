@@ -55,7 +55,7 @@ impl UtunStream {
 
         let addr = SockAddr::new_sys_control(fd,
                                              "com.apple.net.utun_control",
-                                             unit + 1)
+                                             unit)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
         fcntl(fd, FcntlArg::F_SETFL(OFlag::O_NONBLOCK))
