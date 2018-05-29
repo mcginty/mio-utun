@@ -3,6 +3,8 @@
 #![cfg(unix)]
 #![doc(html_root_url = "https://docs.rs/mio-utun/0.6")]
 
+use libc;
+
 use byteorder::{ByteOrder, NativeEndian};
 
 use mio::unix::EventedFd;
@@ -36,6 +38,7 @@ pub const IFF_TUN:   i16 = 0x0001;
 pub const IFF_NO_PI: i16 = 0x1000;
 
 ioctl!(write_ptr tunsetiff with b'T', 202; i32);
+ioctl!(read tungetiff with b'T', 210; u32);
 
 impl UtunStream {
     /// Create a new TCP stream and issue a non-blocking connect to the
@@ -63,6 +66,23 @@ impl UtunStream {
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
         return Ok(UtunStream { fd })
+    }
+
+    /// Returns the name of the interface as assigned by the OS.
+    pub fn name(&self) -> io::Result<String> {
+        let mut buf = [0u8; libc::IFNAMSIZ + 64];
+
+        let res = unsafe { tungetiff(self.fd, buf.as_mut_ptr() as *mut u32) };
+
+        match res {
+            Ok(_) => {
+                let len = buf.iter().position(|&r| r == 0).unwrap();
+                let s = String::from_utf8_lossy(&buf[..len]);
+                Ok(s.to_string())
+            }
+            Err(nix::Error::Sys(_)) => Err(io::Error::last_os_error()),
+            _ => Err(io::ErrorKind::Other.into())
+        }
     }
 
     /// Shuts down the read, write, or both halves of this connection.
