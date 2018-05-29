@@ -4,6 +4,7 @@
 #![doc(html_root_url = "https://docs.rs/mio-utun/0.6")]
 
 #[macro_use] extern crate nix;
+extern crate libc;
 extern crate mio;
 
 

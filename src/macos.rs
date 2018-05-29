@@ -7,6 +7,7 @@
 extern crate mio;
 extern crate nix;
 
+use libc;
 use mio::unix::EventedFd;
 use mio::event::Evented;
 use mio::{Poll, Token, Ready, PollOpt};
@@ -66,6 +67,26 @@ impl UtunStream {
 
 
         return Ok(UtunStream { fd })
+    }
+
+    /// Returns the name of the interface as assigned by the OS.
+    pub fn name(&self) -> io::Result<String> {
+        let mut buf = [0u8; libc::IFNAMSIZ];
+        let mut len = buf.len() as u32;
+        let res = unsafe {
+            libc::getsockopt(self.fd,
+                libc::SYSPROTO_CONTROL,
+                libc::UTUN_OPT_IFNAME,
+                buf.as_mut_ptr() as *mut libc::c_void,
+                &mut len)
+        };
+
+        if res != 0 {
+            Err(io::Error::from_raw_os_error(res))
+        } else {
+            let s = String::from_utf8_lossy(&buf[..(len - 1) as usize]);
+            Ok(s.to_string())
+        }
     }
 
     /// Shuts down the read, write, or both halves of this connection.

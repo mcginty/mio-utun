@@ -25,6 +25,7 @@ fn smoke() {
         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => println!("good!"),
         _ => panic!("should have WouldBlock'd")
     }
+    assert_eq!(utun.name().unwrap(), "utun6");
 }
 
 #[test]
