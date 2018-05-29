@@ -41,8 +41,11 @@ impl UtunStream {
             return Err(io::ErrorKind::AddrNotAvailable.into());
         }
 
-        let unit: u32 = name[4..].parse::<u32>()
-            .map_err(|_| io::Error::from(io::ErrorKind::Other))?;
+        let unit: u32 = if name.len() == 4 {
+            0
+        } else {
+            1 + name[4..].parse::<u32>().map_err(|_| io::Error::from(io::ErrorKind::Other))?
+        };
 
         let fd: RawFd = socket(AddressFamily::System,
                                SockType::Datagram,
